@@ -361,15 +361,154 @@ def display_blog_gui():
     # Display the layout
     console.print(layout)
     
-    # Show navigation help
-    console.print("\n[bold green]🎛️  Navigation Help:[/bold green]")
-    console.print("[cyan]• Use 'python main.py view <post-id>' to read full posts[/cyan]")
-    console.print("[cyan]• Use 'python main.py create' to add new posts[/cyan]")
-    console.print("[cyan]• Use 'python main.py search <term>' to find posts[/cyan]")
-    console.print("[cyan]• Use 'python main.py stats' to see statistics[/cyan]")
-    console.print("[cyan]• Use 'python main.py gui' to refresh this view[/cyan]")
+    # Interactive menu loop
+    console.print("\n[bold green]🎛️  Interactive Menu:[/bold green]")
+    console.print("[dim]Press Ctrl+C to exit anytime[/dim]")
     
-    console.print("\n[bold yellow]✨ Your blog posts are beautifully displayed above![/bold yellow]")
+    while True:
+        try:
+            console.print("\n[bold cyan]Choose an option:[/bold cyan]")
+            console.print("[cyan]1.[/cyan] View a specific post")
+            console.print("[cyan]2.[/cyan] Create a new post")
+            console.print("[cyan]3.[/cyan] Search posts")
+            console.print("[cyan]4.[/cyan] Show statistics")
+            console.print("[cyan]5.[/cyan] Refresh GUI")
+            console.print("[cyan]6.[/cyan] List all posts (table view)")
+            console.print("[cyan]7.[/cyan] Exit")
+            
+            choice = Prompt.ask("[yellow]Enter your choice (1-7)[/yellow]", choices=["1", "2", "3", "4", "5", "6", "7"])
+            
+            if choice == "1":
+                # View specific post
+                post_id = Prompt.ask("[blue]Enter post ID to view[/blue]")
+                post = blog_manager.get_post(post_id)
+                if post:
+                    console.clear()
+                    display_full_post(post, post_id)
+                    Prompt.ask("[dim]Press Enter to return to GUI...[/dim]", default="")
+                    console.clear()
+                    return display_blog_gui()  # Refresh GUI
+                else:
+                    console.print(f"[red]Post '{post_id}' not found[/red]")
+            
+            elif choice == "2":
+                # Create new post
+                console.clear()
+                console.print("[green]Creating new post...[/green]")
+                title = Prompt.ask("[blue]Post title[/blue]")
+                content = click.edit('\n# Write your blog post content here...\n')
+                if content:
+                    tags_input = Prompt.ask("[blue]Tags (comma-separated)[/blue]", default="")
+                    author = Prompt.ask("[blue]Author name[/blue]", default="Anonymous")
+                    
+                    # Create the post
+                    tag_list = validate_tags(tags_input) if tags_input else []
+                    post = BlogPost(
+                        title=title,
+                        content=content.strip(),
+                        tags=tag_list,
+                        author=author
+                    )
+                    
+                    post_id = blog_manager.create_post(post)
+                    console.print(f"[green]✓ Blog post created successfully with ID: {post_id}[/green]")
+                    display_post_summary(post, post_id)
+                    
+                    Prompt.ask("[dim]Press Enter to return to GUI...[/dim]", default="")
+                    console.clear()
+                    return display_blog_gui()  # Refresh GUI
+                else:
+                    console.print("[red]No content provided[/red]")
+            
+            elif choice == "3":
+                # Search posts
+                query = Prompt.ask("[blue]Enter search term[/blue]")
+                results = blog_manager.search_posts(query)
+                console.clear()
+                
+                if results:
+                    console.print(f"[green]Found {len(results)} posts matching '{query}':[/green]\n")
+                    for i, (post_id, post) in enumerate(results, 1):
+                        console.print(f"[cyan]{i}.[/cyan] {post.title} ([dim]{post_id}[/dim])")
+                    
+                    console.print("\n[yellow]Enter post number to view, or press Enter to return:[/yellow]")
+                    try:
+                        post_choice = Prompt.ask("Choice", default="")
+                        if post_choice.isdigit():
+                            idx = int(post_choice) - 1
+                            if 0 <= idx < len(results):
+                                post_id, post = results[idx]
+                                console.clear()
+                                display_full_post(post, post_id)
+                                Prompt.ask("[dim]Press Enter to return to GUI...[/dim]", default="")
+                    except (ValueError, IndexError):
+                        pass
+                else:
+                    console.print(f"[yellow]No posts found matching '{query}'[/yellow]")
+                    Prompt.ask("[dim]Press Enter to return to GUI...[/dim]", default="")
+                
+                console.clear()
+                return display_blog_gui()  # Refresh GUI
+            
+            elif choice == "4":
+                # Show statistics
+                console.clear()
+                stats = blog_manager.get_statistics()
+                display_stats_gui(stats)
+                Prompt.ask("[dim]Press Enter to return to GUI...[/dim]", default="")
+                console.clear()
+                return display_blog_gui()  # Refresh GUI
+            
+            elif choice == "5":
+                # Refresh GUI
+                console.clear()
+                return display_blog_gui()
+            
+            elif choice == "6":
+                # List all posts in table view
+                console.clear()
+                posts = blog_manager.list_posts(limit=50)
+                
+                if posts:
+                    table = Table(title="All Blog Posts")
+                    table.add_column("ID", style="cyan", no_wrap=True)
+                    table.add_column("Title", style="magenta")
+                    table.add_column("Author", style="green")
+                    table.add_column("Tags", style="blue")
+                    table.add_column("Created", style="yellow")
+                    
+                    for post_id, post in posts:
+                        tags_str = ", ".join(post.tags) if post.tags else "None"
+                        table.add_row(
+                            post_id,
+                            truncate_text(post.title, 30),
+                            post.author,
+                            truncate_text(tags_str, 20),
+                            format_date(post.created_at)
+                        )
+                    
+                    console.print(table)
+                else:
+                    console.print("[yellow]No posts found[/yellow]")
+                
+                Prompt.ask("[dim]Press Enter to return to GUI...[/dim]", default="")
+                console.clear()
+                return display_blog_gui()  # Refresh GUI
+            
+            elif choice == "7":
+                # Exit
+                console.print("[green]Goodbye![/green]")
+                break
+                
+        except KeyboardInterrupt:
+            console.print("\n[green]Goodbye![/green]")
+            break
+        except EOFError:
+            console.print("\n[green]Goodbye![/green]")
+            break
+        except Exception as e:
+            console.print(f"[red]Error: {str(e)}[/red]")
+            Prompt.ask("[dim]Press Enter to continue...[/dim]", default="")
 
 def create_sidebar_content(posts):
     """Create sidebar content showing list of posts"""
