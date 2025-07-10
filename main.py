@@ -12,8 +12,16 @@ from rich.table import Table
 from rich.prompt import Prompt, Confirm
 from rich.panel import Panel
 from rich.text import Text
+from rich.layout import Layout
+from rich.align import Align
+from rich.columns import Columns
+from rich.live import Live
+from rich.rule import Rule
+from rich.tree import Tree
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from datetime import datetime
 import json
+import time
 
 from blog_manager import BlogManager
 from models import BlogPost
@@ -66,6 +74,13 @@ def create(title, content, tags, author):
         
         # Display the created post
         display_post_summary(post, post_id)
+        
+        # Ask if user wants to view in GUI
+        try:
+            if Confirm.ask("View all posts in GUI interface?", default=True):
+                display_blog_gui()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[green]Post created successfully! Use 'python main.py gui' to view all posts.[/green]")
         
     except Exception as e:
         console.print(f"[red]Error creating post: {str(e)}[/red]")
@@ -247,6 +262,11 @@ def stats():
     except Exception as e:
         console.print(f"[red]Error getting statistics: {str(e)}[/red]")
 
+@cli.command()
+def gui():
+    """Launch interactive GUI interface for viewing blog posts"""
+    display_blog_gui()
+
 def display_post_summary(post, post_id):
     """Display a summary of a blog post"""
     tags_str = ", ".join(post.tags) if post.tags else "None"
@@ -281,6 +301,145 @@ def display_full_post(post, post_id):
     console.print("\n[bold]Content:[/bold]")
     console.print(post.content)
     console.print("\n" + "="*50 + "\n")
+
+def display_blog_gui():
+    """Display an interactive GUI interface for viewing blog posts"""
+    console.clear()
+    
+    # Get all posts
+    posts = blog_manager.list_posts(limit=50)
+    
+    if not posts:
+        console.print(Panel("[yellow]No blog posts found. Create your first post with:[/yellow]\n[cyan]python main.py create[/cyan]", 
+                          title="🔍 Empty Blog", border_style="yellow"))
+        return
+    
+    # Create header
+    header = Panel(
+        "[bold blue]🌟 Blog Management System - GUI Interface 🌟[/bold blue]\n" +
+        f"[dim]Total Posts: {len(posts)} | Press Ctrl+C to exit[/dim]",
+        border_style="blue"
+    )
+    
+    console.print(header)
+    console.print()
+    
+    # Show animated loading
+    with console.status("[bold green]Loading your blog posts...", spinner="dots"):
+        time.sleep(1)
+    
+    # Create layout
+    layout = Layout()
+    layout.split_column(
+        Layout(name="header", size=3),
+        Layout(name="body"),
+        Layout(name="footer", size=3)
+    )
+    
+    # Split body into sidebar and main content
+    layout["body"].split_row(
+        Layout(name="sidebar", minimum_size=30),
+        Layout(name="main", ratio=2)
+    )
+    
+    # Create sidebar with post list
+    sidebar_content = create_sidebar_content(posts)
+    layout["sidebar"].update(sidebar_content)
+    
+    # Create main content area
+    main_content = create_main_content(posts)
+    layout["main"].update(main_content)
+    
+    # Create footer
+    footer_content = Panel(
+        "[bold cyan]Navigation:[/bold cyan] Use [yellow]'python main.py view <post-id>'[/yellow] to read full posts | " +
+        "[green]'python main.py create'[/green] to add new posts",
+        border_style="cyan"
+    )
+    layout["footer"].update(footer_content)
+    
+    # Display the layout
+    console.print(layout)
+    
+    # Show navigation help
+    console.print("\n[bold green]🎛️  Navigation Help:[/bold green]")
+    console.print("[cyan]• Use 'python main.py view <post-id>' to read full posts[/cyan]")
+    console.print("[cyan]• Use 'python main.py create' to add new posts[/cyan]")
+    console.print("[cyan]• Use 'python main.py search <term>' to find posts[/cyan]")
+    console.print("[cyan]• Use 'python main.py stats' to see statistics[/cyan]")
+    console.print("[cyan]• Use 'python main.py gui' to refresh this view[/cyan]")
+    
+    console.print("\n[bold yellow]✨ Your blog posts are beautifully displayed above![/bold yellow]")
+
+def create_sidebar_content(posts):
+    """Create sidebar content showing list of posts"""
+    tree = Tree("📚 [bold blue]Your Blog Posts[/bold blue]")
+    
+    for post_id, post in posts[:10]:  # Show first 10 posts
+        # Create a branch for each post
+        post_branch = tree.add(f"[green]{post.title}[/green]")
+        post_branch.add(f"[dim]ID:[/dim] [cyan]{post_id}[/cyan]")
+        post_branch.add(f"[dim]Author:[/dim] [yellow]{post.author}[/yellow]")
+        post_branch.add(f"[dim]Created:[/dim] [magenta]{format_date(post.created_at)}[/magenta]")
+        
+        if post.tags:
+            tags_str = ", ".join(post.tags[:3])  # Show first 3 tags
+            post_branch.add(f"[dim]Tags:[/dim] [blue]{tags_str}[/blue]")
+    
+    if len(posts) > 10:
+        tree.add(f"[dim]... and {len(posts) - 10} more posts[/dim]")
+    
+    return Panel(tree, title="📋 Posts Overview", border_style="green")
+
+def create_main_content(posts):
+    """Create main content area with recent posts"""
+    if not posts:
+        return Panel("[yellow]No posts to display[/yellow]", title="📝 Recent Posts", border_style="yellow")
+    
+    # Show the 3 most recent posts
+    recent_posts = posts[:3]
+    
+    content_panels = []
+    for post_id, post in recent_posts:
+        tags_str = ", ".join(post.tags) if post.tags else "None"
+        
+        post_content = f"""
+[bold magenta]{post.title}[/bold magenta]
+[blue]By:[/blue] {post.author} | [blue]Created:[/blue] {format_date(post.created_at)}
+[blue]Tags:[/blue] {tags_str}
+[blue]ID:[/blue] {post_id}
+
+[dim]{truncate_text(post.content, 200)}[/dim]
+        """
+        
+        content_panels.append(Panel(post_content, border_style="magenta"))
+    
+    if len(posts) > 3:
+        content_panels.append(Panel(
+            f"[dim]... and {len(posts) - 3} more posts available[/dim]",
+            border_style="blue"
+        ))
+    
+    return Columns(content_panels, equal=True)
+
+def display_stats_gui(stats):
+    """Display statistics in a GUI format"""
+    console.print(Panel(
+        f"""
+[bold cyan]📊 Blog Analytics Dashboard[/bold cyan]
+
+[green]📝 Total Posts:[/green] {stats['total_posts']}
+[green]👥 Total Authors:[/green] {stats['total_authors']}
+[green]🏷️  Total Tags:[/green] {stats['total_tags']}
+[green]⭐ Most Active Author:[/green] {stats['most_active_author']}
+[green]🔥 Popular Tags:[/green] {', '.join(stats['most_used_tags'][:5])}
+[green]📏 Average Post Length:[/green] {stats['avg_post_length']} characters
+
+[dim]Keep writing to grow your blog![/dim]
+        """,
+        title="📈 Statistics",
+        border_style="cyan"
+    ))
 
 if __name__ == '__main__':
     cli()

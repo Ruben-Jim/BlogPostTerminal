@@ -21,5 +21,28 @@
     ],
     "created_at": "2025-07-10T07:33:11.005547",
     "updated_at": null
+  },
+  "testing-gui-integration": {
+    "title": "Testing GUI Integration",
+    "author": "Developer",
+    "tags": [
+      "gui",
+      "interface",
+      "test"
+    ],
+    "created_at": "2025-07-10T07:42:57.324363",
+    "updated_at": null
+  },
+  "amazing-gui-blog": {
+    "title": "Amazing GUI Blog",
+    "author": "UI Designer",
+    "tags": [
+      "gui",
+      "terminal",
+      "blog",
+      "interface"
+    ],
+    "created_at": "2025-07-10T07:43:12.446595",
+    "updated_at": null
   }
 }

@@ -22,7 +22,8 @@ The application follows a layered architecture pattern with clear separation of 
 ### CLI Interface (`main.py`)
 - **Purpose**: Provides the command-line interface for user interaction
 - **Technology**: Click framework for command parsing, Rich library for enhanced terminal output
-- **Features**: Interactive prompts, formatted tables, colorized output
+- **Features**: Interactive prompts, formatted tables, colorized output, GUI-like terminal interface
+- **GUI Display**: Beautiful terminal interface with sidebar, main content area, and navigation help
 
 ### Blog Manager (`blog_manager.py`)
 - **Purpose**: Core business logic for managing blog posts
@@ -87,3 +88,12 @@ blog_data/
 ```
 
 The system prioritizes simplicity and ease of use over complex features, making it ideal for personal blog management or small-scale content creation workflows.
+
+## Recent Changes
+
+### GUI Interface Enhancement (July 2025)
+- Added new `gui` command for displaying blog posts in a beautiful terminal interface
+- Implemented Rich library layouts with sidebar and main content areas
+- Added animated loading indicators and colorful post previews
+- Enhanced post creation to optionally display GUI after creating posts
+- Improved navigation with visual tree structure for post organization

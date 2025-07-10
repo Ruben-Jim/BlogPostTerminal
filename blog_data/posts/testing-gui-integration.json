@@ -1,0 +1,12 @@
+{
+  "title": "Testing GUI Integration",
+  "content": "This is a test post to see if the GUI displays automatically after creating a new blog post. The GUI should show a nice terminal interface with all my posts displayed in a structured layout.",
+  "author": "Developer",
+  "tags": [
+    "gui",
+    "interface",
+    "test"
+  ],
+  "created_at": "2025-07-10T07:42:57.324363",
+  "updated_at": null
+}
