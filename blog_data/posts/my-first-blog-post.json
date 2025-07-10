@@ -1,0 +1,12 @@
+{
+  "title": "My First Blog Post",
+  "content": "This is my first blog post. I'm excited to share my thoughts on technology and programming. This blog will be a place where I document my learning journey.",
+  "author": "John Doe",
+  "tags": [
+    "technology",
+    "first-post",
+    "programming"
+  ],
+  "created_at": "2025-07-10T07:32:45.636257",
+  "updated_at": null
+}
