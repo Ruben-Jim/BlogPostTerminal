@@ -97,3 +97,11 @@ The system prioritizes simplicity and ease of use over complex features, making 
 - Added animated loading indicators and colorful post previews
 - Enhanced post creation to optionally display GUI after creating posts
 - Improved navigation with visual tree structure for post organization
+
+### Zsh Integration & Script Wrapper (July 2025)
+- Created `blog.sh` script for easy command-line access
+- Added automatic dependency checking and installation
+- Implemented colored output and user-friendly error messages
+- Created `install.sh` for automated setup in Zsh environments
+- Added shell aliases and PATH configuration for seamless usage
+- Full cross-platform compatibility (Linux, macOS, Windows)
